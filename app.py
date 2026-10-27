@@ -87,11 +87,45 @@ with tab1:
         st.write(f"Nyquist frequency: {grid.f_max / 1e3:.2f} cycles/mm")
         st.write("Object A: 2 mm square, 1 mm circular aperture, opaque triangular region.")
         st.write("Object B: four translated copies of Object A.")
+    
     with c2:
-        fig, ax = plt.subplots()
-        show_img(ax, res.U_in.real, f"{obj_name} transmission")
-        st.pyplot(fig)
+        fig, ax = plt.subplots(figsize=(7, 6))
+
+        # Display the object in physical coordinates (mm).
+        object_data = np.abs(res.U_in)
+        threshold = 0.01 * np.max(object_data)
+        rows, cols = np.where(object_data > threshold)
+
+        ax.imshow(
+            res.U_in.real,
+            extent=extent,
+            origin="lower",
+            cmap=cmap,
+            aspect="equal",
+            interpolation="nearest",
+        )
+
+        # Zoom to the actual object, with some padding.
+        if len(rows) > 0 and len(cols) > 0:
+            x_min = grid.x[cols.min()] * 1e3
+            x_max = grid.x[cols.max()] * 1e3
+            y_min = grid.y[rows.min()] * 1e3
+            y_max = grid.y[rows.max()] * 1e3
+
+            pad_x = max(0.15 * (x_max - x_min), 0.2)
+            pad_y = max(0.15 * (y_max - y_min), 0.2)
+
+            ax.set_xlim(x_min - pad_x, x_max + pad_x)
+            ax.set_ylim(y_min - pad_y, y_max + pad_y)
+
+        ax.set_title(f"{obj_name} — Input transmission")
+        ax.set_xlabel("x (mm)")
+        ax.set_ylabel("y (mm)")
+        fig.tight_layout()
+
+        st.pyplot(fig, use_container_width=True)
         plt.close(fig)
+
 
 with tab2:
     st.subheader("Fourier-plane filtering")
