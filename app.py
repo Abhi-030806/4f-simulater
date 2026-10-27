@@ -76,22 +76,96 @@ tab1, tab2, tab3, tab4 = st.tabs(
 )
 
 with tab1:
-    st.subheader("Input object")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.write(f"Object: {obj_name}")
-        st.write("Wavelength: 600 nm")
-        st.write(f"Focal length: {focal_mm} mm")
-        st.write(f"Total 4f length: {4 * focal_mm} mm")
-        st.write(f"Sampling pitch: {grid.dx * 1e6:.2f} µm")
-        st.write(f"Nyquist frequency: {grid.f_max / 1e3:.2f} cycles/mm")
-        st.write("Object A: 2 mm square, 1 mm circular aperture, opaque triangular region.")
-        st.write("Object B: four translated copies of Object A.")
-    with c2:
-        fig, ax = plt.subplots()
-        show_img(ax, res.U_in.real, f"{obj_name} transmission")
-        st.pyplot(fig)
-        plt.close(fig)
+    
+    # 4f optical system setup diagram
+    st.subheader("4f Optical System Setup")
+    st.caption(
+        "Two identical focal-length lenses form a Fourier plane "
+        "where the spatial filter is placed."
+    )
+
+    fig, ax = plt.subplots(figsize=(12, 3.5))
+
+    # Optical axis
+    ax.axhline(0, color="gray", linewidth=1, linestyle="--")
+
+    # Positions of the object, lenses, Fourier plane, and image
+    x_obj, x_l1, x_fp, x_l2, x_img = 0, 1, 2, 3, 4
+
+    # Object plane
+    ax.add_patch(plt.Rectangle(
+        (x_obj - 0.07, -0.55), 0.14, 1.1,
+        facecolor="royalblue", edgecolor="black"
+    ))
+    ax.text(x_obj, 0.75, "Object\nplane",
+            ha="center", va="bottom", fontsize=10)
+
+    # First lens
+    ax.plot([x_l1, x_l1], [-0.8, 0.8],
+            color="royalblue", linewidth=5)
+    ax.text(x_l1, 0.95, "Lens 1",
+            ha="center", fontsize=10)
+
+    # Fourier plane and spatial filter
+    ax.plot([x_fp, x_fp], [-0.8, 0.8],
+            color="crimson", linewidth=3)
+    ax.text(x_fp, 0.95, "Fourier plane",
+            ha="center", fontsize=10)
+    ax.text(x_fp, -1.05, "Spatial filter H(fx, fy)",
+            ha="center", fontsize=9, color="crimson")
+
+    # Second lens
+    ax.plot([x_l2, x_l2], [-0.8, 0.8],
+            color="royalblue", linewidth=5)
+    ax.text(x_l2, 0.95, "Lens 2",
+            ha="center", fontsize=10)
+
+    # Image plane
+    ax.add_patch(plt.Rectangle(
+        (x_img - 0.07, -0.55), 0.14, 1.1,
+        facecolor="seagreen", edgecolor="black"
+    ))
+    ax.text(x_img, 0.75, "Image\nplane",
+            ha="center", va="bottom", fontsize=10)
+
+    # Distance labels: each consecutive separation is f
+    for x_start, x_end in [
+        (x_obj, x_l1),
+        (x_l1, x_fp),
+        (x_fp, x_l2),
+        (x_l2, x_img),
+    ]:
+        ax.annotate(
+            "",
+            xy=(x_end, -1.45),
+            xytext=(x_start, -1.45),
+            arrowprops=dict(arrowstyle="<->", color="black")
+        )
+        ax.text(
+            (x_start + x_end) / 2,
+            -1.32,
+            "f",
+            ha="center",
+            fontsize=10
+        )
+
+    ax.text(
+        2, -1.85,
+        "Total object-to-image distance = 4f",
+        ha="center",
+        fontsize=10,
+        fontweight="bold"
+    )
+
+    ax.set_xlim(-0.5, 4.5)
+    ax.set_ylim(-2.05, 1.35)
+    ax.set_aspect("auto")
+    ax.axis("off")
+    fig.tight_layout()
+
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+
 
 with tab2:
     st.subheader("Fourier-plane filtering")
